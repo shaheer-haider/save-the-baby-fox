@@ -16,9 +16,17 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsInitializationListener, IU
     [SerializeField] string _androidGameId;
     [SerializeField] string _iOSGameId;
     [SerializeField] bool _testMode = false;
-
+    bool isAddLoaded = false;
     void Awake()
     {
+        if (Advertisement.isInitialized)
+        {
+            isAddLoaded = PlayerPrefs.GetInt("isAddLoaded", 0) == 1;
+        }
+        else
+        {
+            isAddLoaded = false;
+        }
         // Get the Ad Unit ID for the current platform:
         _adUnitId = (Application.platform == RuntimePlatform.IPhonePlayer)
             ? _iOsAdUnitId
@@ -33,6 +41,12 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsInitializationListener, IU
     // Load content to the Ad Unit:
     public void LoadAd()
     {
+        if (!isAddLoaded)
+        {
+            Debug.Log("Loading Ad: " + _adUnitId);
+            Advertisement.Load(_adUnitId, this);
+        }
+
         int adsCounter = PlayerPrefs.GetInt("Ads", 0);
         if (adsCounter < 2)
         {
@@ -42,8 +56,7 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsInitializationListener, IU
         PlayerPrefs.SetInt("Ads", 0);
         isAddRunning = true;
         // IMPORTANT! Only load content AFTER initialization (in this example, initialization is handled in a different script).
-        Debug.Log("Loading Ad: " + _adUnitId);
-        Advertisement.Load(_adUnitId, this);
+        ShowAd();
     }
 
     // Show the loaded content in the Ad Unit:
@@ -58,11 +71,15 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsInitializationListener, IU
     // IUnityAdsLoadListener start
     public void OnUnityAdsAdLoaded(string adUnitId)
     {
-        print("Ad loaded");
-        ShowAd();
+        isAddLoaded = true;
+        print("Ad loaded: " + adUnitId);
+        PlayerPrefs.SetInt("isAddLoaded", 1);
+        // ShowAd();
     }
     public void OnUnityAdsFailedToLoad(string adUnitId, UnityAdsLoadError error, string message)
     {
+        PlayerPrefs.SetInt("isAddLoaded", 0);
+        isAddLoaded = false;
         isAddRunning = false;
         Debug.Log($"Error loading Ad Unit: {adUnitId} - {error.ToString()} - {message}");
     }
@@ -76,6 +93,8 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsInitializationListener, IU
     {
         isAddRunning = false;
         Debug.Log($"Error showing Ad Unit {adUnitId}: {error.ToString()} - {message}");
+        PlayerPrefs.SetInt("isAddLoaded", 0);
+        isAddLoaded = false;
     }
 
     public void OnUnityAdsShowStart(string adUnitId) { }
@@ -84,6 +103,8 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsInitializationListener, IU
     {
         print("OnUnityAdsShowComplete");
         isAddRunning = false;
+        PlayerPrefs.SetInt("isAddLoaded", 0);
+        isAddLoaded = false;
     }
 
     // intialize ads
@@ -102,6 +123,7 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsInitializationListener, IU
     public void OnInitializationComplete()
     {
         Debug.Log("Unity Ads initialization complete.");
+        Advertisement.Load(_adUnitId, this);
     }
 
     public void OnInitializationFailed(UnityAdsInitializationError error, string message)

@@ -11,7 +11,7 @@ public class GroundManager : MonoBehaviour
     public UIManager UIManager;
     public CameraController cameraController;
     public bool finishMoveGround = false;  // When all ground finished move up, it's became true
-    public int numberOfGround = 5; //Number of ground for forward side and back side
+    public int numberOfGround = 7; //Number of ground for forward side and back side
 
 
     private float timeToDestroyGround = 0.15f; //When game over, ground will scale with this time
